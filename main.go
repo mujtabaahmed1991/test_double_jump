@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gorilla/mux"
 	"github.com/gravitational/configure"
 	"github.com/test_double_jump/contracts"
 )
@@ -54,13 +55,12 @@ func getConnection(endpoint, tokenHash string) (*ethclient.Client, *contracts.DJ
 
 func getHandler(endpoint string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		queryValues := r.URL.Query()
-		tokenId, err := strconv.Atoi(queryValues.Get("tokenId"))
-		tokenHash := queryValues.Get("contractAddress")
+		params := mux.Vars(r)
+		tokenId, err := strconv.Atoi(params["tokenId"])
+		tokenHash := params["contractAddress"]
 		_, token := getConnection(endpoint, tokenHash)
 		if err != nil {
-			fmt.Fprintf(w, "Invalid tokenId:"+queryValues.Get("tokenId"))
-			fmt.Println(queryValues.Get("tokenId"))
+			fmt.Fprintf(w, "Invalid tokenId:"+params["tokenId"])
 			log.Fatalf("Invalid tokenId")
 		}
 		address, err := token.OwnerOf(nil, big.NewInt(int64(tokenId)))
@@ -73,6 +73,7 @@ func getHandler(endpoint string) http.HandlerFunc {
 }
 
 func main() {
+	router := mux.NewRouter()
 	cfg := readConfig()
 	key, err := ioutil.ReadFile(cfg.KeyFile)
 	if err != nil {
@@ -82,10 +83,11 @@ func main() {
 	if err = json.Unmarshal(key, &address); err != nil {
 		log.Fatalf("Invalid JSON: %s error: v%", string(key), err)
 	}
-	http.HandleFunc("/Get", getHandler(cfg.Endpoint))
-	http.HandleFunc("/Add", func(w http.ResponseWriter, r *http.Request) {
-		queryValues := r.URL.Query()
-		_, token := getConnection(cfg.Endpoint, queryValues.Get("contractAddress"))
+	router.HandleFunc("/Get/{contractAddress}/{tokenId}", getHandler(cfg.Endpoint))
+	router.HandleFunc("/Add/{contractAddress}", func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		contractAddress := params["contractAddress"]
+		_, token := getConnection(cfg.Endpoint, contractAddress)
 		auth, err := bind.NewTransactor(strings.NewReader(string(key)), "")
 		if err != nil {
 			log.Fatalf("Failed to create authorized transactor: %v", err)
@@ -97,5 +99,6 @@ func main() {
 		token.Approve(auth, common.HexToAddress(address.Address), big.NewInt(1))
 		fmt.Fprintf(w, "Added to token waiting for approval")
 	})
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
