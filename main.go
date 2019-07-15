@@ -35,7 +35,7 @@ func readConfig() Config {
 	configure.ParseEnv(&config)
 	configure.ParseCommandLine(&config, os.Args[1:])
 	if config.Endpoint == "" || config.KeyFile == "" {
-		log.Fatal(`Usage go run main.go --geth_endpoint=<GETH> --token_hash=<ContractAddress> --key_file=<AccountKeyJSON>
+		log.Fatal(`Usage go run main.go --geth_endpoint=<GETH> --key_file=<AccountKeyJSON>
 		           or set env variable GETH_ENDPOINT, TOKEN_HASH`)
 	}
 	return config

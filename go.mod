@@ -9,7 +9,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.0
 	github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/gorilla/mux v1.7.3
 	github.com/gravitational/configure v0.0.0-20180808141939-c3428bd84c23
 	github.com/gravitational/log v0.0.0-20150806001153-8e1bbf1bba05 // indirect
 	github.com/gravitational/trace v0.0.0-20190612100216-931bb2abd388 // indirect
